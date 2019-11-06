@@ -1,35 +1,11 @@
 -- ESP8266 webserver
--- This allows control of the builtin LED - On/Off/Blink/Blink Off.
+-- This allows control of the door Entry/Exit latch
 --  assumes valid internet connection active (wifi, ip address)
-local outpin=4
-local state = false
-
-function init()
-  gpio.mode(outpin,gpio.OUTPUT)
-  gpio.write(outpin,gpio.HIGH)  -- LED is pulled so HIGH = off
-  blinkOFF()
-end
-
-function togLED()
-  if state==false then gpio.write(outpin,gpio.HIGH)
-  else                 gpio.write(outpin,gpio.LOW) end
-  state = not state;
-end
-
-function blkinkON()
-if mytimer~=nil then return end -- Timer already on.
-mytimer = tmr.create()
-mytimer:alarm(200, tmr.ALARM_AUTO, function()  togLED() end)
-end
-
-function blinkOFF()
-  if mytimer==nil then return end -- Timer already off.
-  mytimer:unregister()  mytimer=nil
-end
+local Entrystate = On
+local Exitstate = On
 
 function server()
 srv=net.createServer(net.TCP)
-init()
     srv:listen(80,function(conn)
     conn:on("receive",function(conn,payload)
     print(payload)  -- View the received data,
@@ -37,14 +13,19 @@ init()
     function controlLED()
       control = string.sub(payload,fnd[2]+1) -- Data is at end already.
       if control == "ON"       then gpio.write(outpin,gpio.LOW);  blinkOFF() return end
+  if Entrystate=="On" then 
+     Entrycolor="green"
+ else  Entrystate = "Off"
+     Entrycolor="red"
+     end
       if control == "OFF"      then gpio.write(outpin,gpio.HIGH); blinkOFF() return end
-      if control == "Blink"    then blkinkON() return end
-      if control == "Blinkoff" then blinkOFF() return end
     end
 
     --get control data from payload
-    fnd = {string.find(payload,"ledbi=")}
-    if #fnd ~= 0 then controlLED() end -- Is there data in payload? - Take action if so.
+    fnd = {string.find(payload,"Entry=")}
+    if #fnd ~= 0 then 
+      Entrystate = string.sub(payload,fnd[2]+1) -- Data is at end already.
+    end -- Is there data in payload? - Take action if so.
 
     conn:send('<!DOCTYPE HTML>\n')
     conn:send('<html>\n')
@@ -69,14 +50,21 @@ init()
     conn:send('</style></head>\n')
     -- HTML body Page content.
     conn:send('<body>')
-    conn:send('<h1>Control of nodeMCU<br>(ESP8266-E12) Built in LED.</h1>\n')
-    conn:send('<p>The built in LED for NodeMCU V3 is on D4</p>\n')
-    -- HTML Form (POST type) and buttons.
+    conn:send('<h1>Control of door latch.</h1>\n')
+   -- HTML Form (POST type) and buttons.
     conn:send('<form action="" method="POST">\n')
-    conn:send('<input type="submit" name="ledbi" value="ON" > Turn Built in LED on<br><br>\n')
-    conn:send('<input type="submit" name="ledbi" value="OFF"> Turn Built in LED off<br><br>\n')
-    conn:send('<input type="submit" name="ledbi" value="Blink"> Blink LED<br><br>\n')
-    conn:send('<input type="submit" name="ledbi" value="Blinkoff"> Stop LED Blink</form>\n')
+    conn:send('<input type="submit" name="Entry" ' )
+    if Entrystate=="On" then
+            conn:send('value="ON" style="background-color:green" > Turn Entry Latch ON<br><br>\n')
+    else
+            conn:send('value="OFF" style="background-color:red" > Turn Entry Latch OFF<br><br>\n')
+    end 
+    conn:send('<input type="submit" name="Exit" ')        
+    if Exitstate=="On" then
+            conn:send('value="ON" style="background-color:green" > Turn Exit Latch ON<br><br>\n')
+    else
+            conn:send('value="OFF" style="background-color:red" > Turn Exit Latch OFF<br><br>\n')
+    end 
     conn:send('</body></html>\n')
     conn:on("sent",function(conn) conn:close() end)
     end)
