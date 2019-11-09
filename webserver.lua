@@ -8,41 +8,38 @@ function server()
     srv=net.createServer(net.TCP)
     srv:listen(80,function(conn)
     conn:on("receive",function(conn,payload)
-    print(payload)  -- View the received data,
+    -- print(payload)  -- View the received data,
     --get control data from payload
     fnd = {string.find(payload,"Entry=")}
     if #fnd ~= 0 then 
-        Entryvalue = string.sub(payload,fnd[2]+1) -- Data is at end already.
+        Entryvalue = string.sub(payload,fnd[2]+1) 
         if Entryvalue=="ON" then 
             Entrycolor="green"
         else  Entryvalue = "OFF"
              Entrycolor="red"
         end
-    end -- Is there data in payload? - Take action if so.
+    end 
     fnd = {string.find(payload,"Exit=")}
     if #fnd ~= 0 then 
-        Exitvalue = string.sub(payload,fnd[2]+1) -- Data is at end already.
+        Exitvalue = string.sub(payload,fnd[2]+1)
         if Exitvalue=="ON" then 
             Exitcolor="green"
         else  Exitvalue = "OFF"
              Exitcolor="red"
         end
-    end -- Is there data in payload? - Take action if so.
-
+    end 
     conn:send('<!DOCTYPE HTML>\n')
     conn:send('<html>\n')
     conn:send('<head><meta http-equiv="content-type" content="text/html; charset=UTF-8">\n')
     -- Scale the viewport to fit the device.
     conn:send('<meta name="viewport" content="width=device-width, initial-scale=1">')
-    -- Title
     conn:send('<title>Cat Door Latch Control</title>\n')
     -- CSS style definition for submit buttons
     conn:send('<style>\n')
     conn:send('button[type="submit"] {\n')
-    conn:send('color:#050; width:100px; padding:10px;\n')
+    conn:send('color:yellow; width:100px; padding:10px;\n')
     conn:send('font: bold 84% "trebuchet ms",helvetica,sans-serif;\n')
     conn:send('border:1px solid; border-radius: 12px;\n')
-    conn:send('transition-duration: 0.4s;\n')
     conn:send('}\n')
     conn:send('button[type="submit"]:hover {\n')
     conn:send('color: white;\n')
@@ -57,6 +54,7 @@ function server()
     conn:send('<button type="submit" name="Entry" ' )
     if Entryvalue=="ON" then
             conn:send('value="OFF" style="background-color:green" >ENTRY ENABLED</button><br><br>\n')
+            print("#B")                      -- entry allowed
     else
             conn:send('value="ON" style="background-color:red" >ENTRY DISABLED</button><br><br>\n')
             print("#O")                      -- exit only

@@ -1,0 +1,18 @@
+    conn:send('<!DOCTYPE HTML>\n')
+    conn:send('<html>\n')
+    conn:send('<head><meta http-equiv="content-type" content="text/html; charset=UTF-8">\n')
+    -- Scale the viewport to fit the device.
+    conn:send('<meta name="viewport" content="width=device-width, initial-scale=1">')
+    conn:send('<title>Cat Door Latch Control</title>\n')
+    -- CSS style definition for submit buttons
+    conn:send('<style>\n')
+    conn:send('button[type="submit"] {\n')
+    conn:send('color:yellow; width:100px; padding:10px;\n')
+    conn:send('font: bold 84% "trebuchet ms",helvetica,sans-serif;\n')
+    conn:send('border:1px solid; border-radius: 12px;\n')
+    -- conn:send('transition-duration: 0.4s;\n')
+    conn:send('}\n')
+    conn:send('button[type="submit"]:hover {\n')
+    conn:send('color: white;\n')
+    conn:send('}')
+    conn:send('</style></head>\n')
