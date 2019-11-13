@@ -6,6 +6,8 @@ require("wificredentials")
 -- Some control variables
 wifiTrys     = 0      -- reset counter of trys to connect to wifi
 NUMWIFITRYS  = 20    -- Maximum number of WIFI Testings while waiting for connection
+Log={}
+Loglim=30;
 require("WifiConnect")
 function init_webserver()
 dofile("webserver.lua")

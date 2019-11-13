@@ -3,7 +3,6 @@
 --  assumes valid internet connection active (wifi, ip address)
 local Entryvalue = "ON"
 local Exitvalue = "ON"
-Log={}
 function server()
     srv=net.createServer(net.TCP)
     srv:listen(80,function(conn)
@@ -77,4 +76,3 @@ function server()
 end)
 
 end
-
