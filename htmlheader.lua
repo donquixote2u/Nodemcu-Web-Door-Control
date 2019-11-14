@@ -29,11 +29,16 @@
     end
     
     function button(button_name,button_state,qrystring)
-    local txt='<button type="submit" name="'.button_name.'" ' )
-    fnd = {string.find(qrystring,button_name.."=")}
-    if #fnd ~= 0 then 
-        button_state = string.sub(qrystring,fnd[2]+1)  -- change button state to received value
+    local txt='<button type="submit" name="'..button_name..'" '
+    -- DEBUG ONLY print("qrystring="..qrystring)
+    local arg=button_name.."="
+    local s,f = string.find(qrystring,arg)
+    if f ~= nil then 
+        button_state = string.sub(qrystring,f+1)  -- change button state to received value
 	end
+    if (button_name=="DEBUG") and (button_state=="ON") then
+       serTimer:alarm(serinitTimeout,tmr.ALARM_SINGLE,function() dofile("serial.lua") end) 
+    end 
     if button_state=="ON" then
 		value="OFF"
        colour="green"
@@ -43,9 +48,9 @@
        colour="red"
        state_desc="DISABLED"
     end
-    txt=txt+'value="'..value..' style="background-color:'..colour..'" >'..button_name..' '..state_desc..'</button><br><br>\n'      
+    txt=txt..' value="'..value..'" style="background-color:'..colour..'" >'..button_name..' '..state_desc..'</button><br><br>\n'      
     -- print("#O")                     
-    txt=txt..'</button><br><br>\n')
+    txt=txt..'</button><br><br>\n'
     return txt  
 	end
 	

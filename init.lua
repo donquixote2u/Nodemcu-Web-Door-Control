@@ -13,11 +13,7 @@ function init_webserver()
 dofile("webserver.lua")
 server()
 serinitTimeout=5000       -- // timer in ms
-serTimer=tmr.create()  -- // start timer
-serTimer:alarm(serinitTimeout,tmr.ALARM_SINGLE,init_serial) 
-end
-function init_serial()
--- dofile("serial.lua")
+serTimer=tmr.create()  -- // create timer
 end
 initTimeout=2000       -- // timer in ms
 initTimer=tmr.create()  -- // start timer
