@@ -116,7 +116,7 @@ end
 -- configure for 115200, 8N1, with echo
 function serialon()
 uart.setup(0, 115200, 8, uart.PARITY_NONE, uart.STOPBITS_1, 1)
-uart.on("data", "\r",
+uart.on("data", "\n",
   function(data)
     if(#Log>Loglim) then
       table.remove(Log,1)
