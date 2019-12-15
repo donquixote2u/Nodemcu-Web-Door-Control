@@ -18,9 +18,9 @@ function server()
 	html=html..button("EXIT",EXIT,payload)
 	html=html..button("SERIAL",SERIAL,payload)
 	html=html..button("DEBUG",DEBUG,payload)
-	conn:send(html)
-	html=debugout()
-	html=html..'</body></html>\n'
+	-- conn:send(html)
+	html=html..'</div><div id="debug">'..debugout()  -- blank unless debug on
+	html=html..'</div></body></html>\n'
     conn:send(html)
     conn:on("sent",function(conn) conn:close() end)
     end)
@@ -43,14 +43,15 @@ function header()
     txt=txt..'}\n'
     txt=txt..'button[type="submit"]:hover {\n'
     txt=txt..'color: white;\n'
-    txt=txt..'}'
+    txt=txt..'}\n'
+    txt=txt..'#form {float: left;}\n  #debug {float:left; padding: 0 0 0 50px;}\n'
     txt=txt..'</style></head>\n'
     return txt
 end
     
 function form()
     local txt='<body>'
-    txt=txt..'<h1>CAT DOOR STATUS</h1>'
+    txt=txt..'<h1>CAT DOOR STATUS</h1><div id="form">'
     txt=txt..'<h3> (press to toggle status)</h3>'
     -- HTML Form (POST type) and buttons.  buttons trigger toggle from OFF to ON and vice versa
     txt=txt..'<form action="" method="POST">\n'
@@ -86,7 +87,7 @@ function debugout()
     local txt="<p>"
     if(DEBUG=="ON") then
        for k, v in pairs(Log) do
-        txt=txt..v.."<br>"
+        txt=txt..k..":"..v.."<br>"
         end
         txt=txt.."</p>"
      end   
@@ -113,15 +114,15 @@ function FSERIAL(state)
     end 
 end
 
--- configure for 115200, 8N1, with echo
+-- comms line to door control: configure for 115200, 8N1, with echo
 function serialon()
 uart.setup(0, 115200, 8, uart.PARITY_NONE, uart.STOPBITS_1, 1)
 uart.on("data", "\n",
   function(data)
+    table.insert(Log,1,data)
     if(#Log>Loglim) then
-      table.remove(Log,1)
+      table.remove(Log,Loglim)
     end
-    table.insert(Log,data)  
     end, 0)
 end 
 
