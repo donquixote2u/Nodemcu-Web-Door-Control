@@ -15,6 +15,7 @@ require("WifiConnect")
 dofile("webif.lua")
 function init_webserver()
 server()
+FSERIAL("ON")   -- init serial port
 end
 initTimeout=2000       --  timer in ms
 initTimer=tmr.create()  -- start timer

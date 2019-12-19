@@ -3,20 +3,20 @@
 --  assumes valid internet connection active (wifi, ip address)
 ENTRY = "ON"
 EXIT = "ON"
-SERIAL = "OFF"
+-- SERIAL = "ON"
 DEBUG = "OFF"
 function server()
     srv=net.createServer(net.TCP)
     srv:listen(80,function(conn)
     conn:on("receive",function(conn,payload)
-    print("http req received\n")
-    -- print(payload)  -- View the received data,
+    -- DEBUG print("http req received\n")
+    -- DEBUG print(payload)  -- View the received data,
     html=header()				-- output html header/stylesheet
-    conn:send(html)
-	html=form()					-- html body + form header.
+    -- conn:send(html)
+	html=html..form()					-- html body + form header.
 	html=html..button("ENTRY",ENTRY,payload)
 	html=html..button("EXIT",EXIT,payload)
-	html=html..button("SERIAL",SERIAL,payload)
+	-- html=html..button("SERIAL",SERIAL,payload)
 	html=html..button("DEBUG",DEBUG,payload)
 	-- conn:send(html)
 	html=html..'</div><div id="debug">'..debugout()  -- blank unless debug on
@@ -63,9 +63,9 @@ function button(button_name,button_state,qrystring)
     -- search url to see if this button was pressed=changed
     local s,f = string.find(qrystring,button_name)
     if f ~= nil then -- this button has an associated action request
-        button_state = string.sub(qrystring,f+2)  -- change button state to received value
-        print("button "..button_name.." TURNED "..button_state)
-        _G[button_name]=button_state
+        button_state = string.sub(qrystring,f+2)  -- get button state received value
+        -- DEBUG print("button "..button_name.." TURNED "..button_state)
+        _G[button_name]=button_state        -- set button to received value
         _G["F"..button_name](button_state)  -- call action function for that button  
     end
     if button_state=="ON" then
@@ -78,7 +78,6 @@ function button(button_name,button_state,qrystring)
        state_desc="DISABLED"
     end
     txt=txt..' value="'..value..'" style="background-color:'..colour..'" >'..button_name..' '..state_desc..'</button><br><br>\n'      
-    -- print("#O")                     
     txt=txt..'</button><br><br>\n'
     return txt  
 end
@@ -94,11 +93,19 @@ function debugout()
         return txt
 end
 
+function FPRINT(txt)
+    uart.write(0,txt)
+    table.insert(Log,1,txt)
+    if(#Log>Loglim) then
+      table.remove(Log,Loglim)
+    end
+end
+
 function FENTRY(state)
     if (state=="ON") then
-       if(EXIT=="ON") then print("#B") else print("#I") end
+       if(EXIT=="ON") then FPRINT("#B") else FPRINT("#I") end
     else
-       if(EXIT=="ON") then print("#O") else print("#L") end
+       if(EXIT=="ON") then FPRINT("#O") else FPRINT("#L") end
     end 
 end
 
