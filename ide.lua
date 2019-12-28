@@ -192,5 +192,3 @@ srv:listen(80, function(conn)
     sck = nil
   end)
 end)
-
-print("listening at " .. wifi.sta.getip() .. ", free: " .. node.heap())

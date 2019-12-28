@@ -3,7 +3,7 @@
 --  assumes valid internet connection active (wifi, ip address)
 ENTRY = "ON"
 EXIT = "ON"
--- SERIAL = "ON"
+IDE = "OFF"
 DEBUG = "OFF"
 function server()
     srv=net.createServer(net.TCP)
@@ -16,9 +16,8 @@ function server()
 	html=html..form()					-- html body + form header.
 	html=html..button("ENTRY",ENTRY,payload)
 	html=html..button("EXIT",EXIT,payload)
-	-- html=html..button("SERIAL",SERIAL,payload)
 	html=html..button("DEBUG",DEBUG,payload)
-	-- conn:send(html)
+    -- html=html..button("IDE",IDE,payload)
 	html=html..'</div><div id="debug">'..debugout()  -- blank unless debug on
 	html=html..'</div></body></html>\n'
     conn:send(html)
@@ -112,6 +111,9 @@ end
 function FEXIT(state)
 end
 
+function FDEBUG(state)
+end
+
 function FSERIAL(state)
     if (state=="ON") then
        serTimer:alarm(serinitTimeout,tmr.ALARM_SINGLE,function() serialon() end) 
@@ -130,8 +132,22 @@ uart.on("data", "\n",
     if(#Log>Loglim) then
       table.remove(Log,Loglim)
     end
+    local s,f=string.find(data,"*DO")
+    if(f~=nil) then
+       print("alert called:"..f.."\n")
+       initTimer:alarm(initTimeout,tmr.ALARM_SINGLE,function() sendAlert("DO") end) 
+    end   
     end, 0)
 end 
 
-function FDEBUG(state)
+function sendAlert(alert_type)
+require("webclient1")
+initTimer:alarm(initTimeout,tmr.ALARM_SINGLE,function() sendSMTP(alert_type) end) 
+end
+
+function sendSMTP(alert_type)
+setServer("IP","192.168.0.2") -- set address
+setServer("SUBDIR","includes/smtp.php") -- set dir
+REQ="mailto=bruce@share.net.nz&subject=alert-"..alert_type.."&body="..alert_type
+sendReq()
 end
