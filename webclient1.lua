@@ -6,12 +6,12 @@ serverParm[param]=val
 end
 function sendReq()
 buffer=""
-REQ="login_id="..MAIL_ID.."&login_pw="..MAIL_PW.."&"..REQ
-REQBODY1= " HTTP/1.0\r\n";
-REQBODY2="Content-Type: application/x-www-form-urlencoded\r\nContent-Length: "
--- REQUEST="POST /"..serverParm["SUBDIR"]..REQ..REQBODY1..REQBODY2;
-REQUEST="POST /"..serverParm["SUBDIR"]..REQBODY1..REQBODY2..#REQ.."\r\n\r\n"..REQ;
--- connection to server
+REQBODY1= " HTTP/1.1\r\n";
+REQBODY2="Host: Wirepusher.com\r\n"
+    .. "Connection: close\r\n"
+    .. "Accept: */*\r\n"
+    .. "User-Agent: Mozilla/4.0 (compatible; esp8266 Lua; Windows NT 5.1)\r\n\r\n"
+REQUEST="GET /"..serverParm["SUBDIR"]..REQ..REQBODY1..REQBODY2;
 print("Sending data to "..serverParm["IP"])
 sk=net.createConnection(net.TCP, 0)
 sk:on("receive", function(sck, payload)
@@ -25,7 +25,7 @@ sk:on("connection", function(sck)
     end)
 sk:on("sent",function(sck)
       endTimer:alarm(endTimeout,tmr.ALARM_SINGLE,function()  
-      print("Closing smtp connection")
+      print("Closing http connection")
       sck:close()
       end)    
     end)
@@ -35,4 +35,3 @@ end
 serverParm={} -- connection params  for REMOTE server
 endTimeout=6000       --  timer in ms
 endTimer=tmr.create()  -- init end timer
-require("mail_credentials")

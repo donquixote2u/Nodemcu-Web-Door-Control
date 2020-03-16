@@ -1,6 +1,6 @@
 -- accept data via webserver GET, display on web and screen
 --manifest: checkwifi.lua, screen.lua, webface.lua, webserverlua
---new manifest: screen.lua,connectIP.lua, ide.lua, wificredentials.lua
+--new manifest: WifiConnect.lua, wificredentials.lua,webif.lua,httpclient.lua
 -- Constants
 require("wificredentials")
 -- Some control variables
