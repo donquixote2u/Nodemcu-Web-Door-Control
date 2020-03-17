@@ -3,23 +3,27 @@
 --  assumes valid internet connection active (wifi, ip address)
 ENTRY = "ON"
 EXIT = "ON"
-IDE = "OFF"
-DEBUG = "OFF"
+DEBUG = "ON"
 function server()
     srv=net.createServer(net.TCP)
     srv:listen(80,function(conn)
     conn:on("receive",function(conn,payload)
     -- DEBUG print("http req received\n")
     -- DEBUG print(payload)  -- View the received data,
+    local s,f = string.find(payload,'command')
+    if f ~= nil then -- this button has an associated action request
+        command=string.sub(payload,f+2)  -- get button state received value
+        -- print("cmd is:"..command)
+        FPRINT("#"..command)
+        -- _G[button_name]=button_state        -- set button to received value
+        -- _G["F"..button_name](button_state)  -- call action function for that button  
+    end
     html=header()				-- output html header/stylesheet
-    -- conn:send(html)
 	html=html..form()					-- html body + form header.
-	html=html..button("ENTRY",ENTRY,payload)
-	html=html..button("EXIT",EXIT,payload)
-	html=html..button("DEBUG",DEBUG,payload)
-    -- html=html..button("IDE",IDE,payload)
-	html=html..'</div><div id="debug">'..debugout()  -- blank unless debug on
-	html=html..'</div></body></html>\n'
+	html=html.."<input type='text' size='2' name='command'><br>"
+	html=html.."</form>"
+	html=html..'</div><div id="debug"><code>'..debugout()  -- blank unless debug on
+	html=html..'</code></div></body></html>\n'
     conn:send(html)
     conn:on("sent",function(conn) conn:close() end)
     end)
@@ -34,16 +38,8 @@ function header()
     txt=txt..'<meta name="viewport" content="width=device-width, initial-scale=1">'
     txt=txt..'<title>Cat Door Latch Control</title>\n'
     -- CSS style definition for submit buttons
+    txt=txt.."<link href='http://192.168.0.2/WebUI/css/bootstrap.css' rel='stylesheet' type='text/css' />\n"
     txt=txt..'<style>\n'
-    txt=txt..'button[type="submit"] {\n'
-    txt=txt..'color:yellow; width:100px; padding:10px;\n'
-    txt=txt..'font: bold 84% "trebuchet ms",helvetica,sans-serif;\n'
-    txt=txt..'border:1px solid; border-radius: 12px;\n'
-    txt=txt..'}\n'
-    txt=txt..'button[type="submit"]:hover {\n'
-    txt=txt..'color: white;\n'
-    txt=txt..'}\n'
-    txt=txt..'#form {float: left;}\n  #debug {float:left; padding: 0 0 0 50px;}\n'
     txt=txt..'</style></head>\n'
     return txt
 end
@@ -51,34 +47,8 @@ end
 function form()
     local txt='<body>'
     txt=txt..'<h1>CAT DOOR STATUS</h1><div id="form">'
-    txt=txt..'<h3> (press to toggle status)</h3>'
-    -- HTML Form (POST type) and buttons.  buttons trigger toggle from OFF to ON and vice versa
     txt=txt..'<form action="" method="POST">\n'
     return txt
-end
-    
-function button(button_name,button_state,qrystring)
-    local txt='<button type="submit" name="'..button_name..'" '
-    -- search url to see if this button was pressed=changed
-    local s,f = string.find(qrystring,button_name)
-    if f ~= nil then -- this button has an associated action request
-        button_state = string.sub(qrystring,f+2)  -- get button state received value
-        -- DEBUG print("button "..button_name.." TURNED "..button_state)
-        _G[button_name]=button_state        -- set button to received value
-        _G["F"..button_name](button_state)  -- call action function for that button  
-    end
-    if button_state=="ON" then
-        value="OFF"
-       colour="green"
-       state_desc="ENABLED"
-    else
-       value="ON"
-       colour="red"
-       state_desc="DISABLED"
-    end
-    txt=txt..' value="'..value..'" style="background-color:'..colour..'" >'..button_name..' '..state_desc..'</button><br><br>\n'      
-    txt=txt..'</button><br><br>\n'
-    return txt  
 end
     
 function debugout()
@@ -134,7 +104,7 @@ uart.on("data", "\n",
     end
     local s,f=string.find(data,"*DO")
     if(f~=nil) then
-       alert=string.sub(data,s+1,s+3) // isolate alert code
+       alert=string.sub(data,s+1,s+3) -- isolate alert code
        print("alert called:"..alert.."\n")
        initTimer:alarm(initTimeout,tmr.ALARM_SINGLE,function() sendAlert(alert) end) 
     end   
