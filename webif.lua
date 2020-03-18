@@ -1,9 +1,8 @@
 -- ESP8266 webserver
 -- This allows control of the door Entry/Exit latch
 --  assumes valid internet connection active (wifi, ip address)
-ENTRY = "ON"
-EXIT = "ON"
 DEBUG = "ON"
+RESET = false
 function server()
     srv=net.createServer(net.TCP)
     srv:listen(80,function(conn)
@@ -11,21 +10,30 @@ function server()
     -- DEBUG print("http req received\n")
     -- DEBUG print(payload)  -- View the received data,
     local s,f = string.find(payload,'command')
-    if f ~= nil then -- this button has an associated action request
-        command=string.sub(payload,f+2)  -- get button state received value
+    if (f ~= nil) then -- this button has an associated action request
+        command=string.upper(string.sub(payload,f+2))  -- get button state received value
         -- print("cmd is:"..command)
+    else command="Q" -- default command queries status
+    end   
+    if (command=="R") then
+        RESET=true
+    else      
         FPRINT("#"..command)
-        -- _G[button_name]=button_state        -- set button to received value
-        -- _G["F"..button_name](button_state)  -- call action function for that button  
-    end
+    end  
+    -- _G[button_name]=button_state        -- set button to received value
+    -- _G["F"..button_name](button_state)  -- call action function for that button  
     html=header()				-- output html header/stylesheet
 	html=html..form()					-- html body + form header.
-	html=html.."<input type='text' size='2' name='command'><br>"
+	html=html.."<input type='text' size='1' name='command' autofocus><br>"
 	html=html.."</form>"
-	html=html..'</div><div id="debug"><code>'..debugout()  -- blank unless debug on
+    html=html.."Options:<br>latch status: B/O/I/L/Q <br>tag learn: T<br></div>"  
+	html=html..'<div id="debug"><code>'..debugout()  -- blank unless debug on
 	html=html..'</code></div></body></html>\n'
     conn:send(html)
-    conn:on("sent",function(conn) conn:close() end)
+    conn:on("sent",function(conn) 
+        conn:close()
+        initTimer:alarm(initTimeout,tmr.ALARM_SINGLE,function() if (RESET) then node.restart();end end) 
+        end)
     end)
 end)
 end
@@ -39,8 +47,8 @@ function header()
     txt=txt..'<title>Cat Door Latch Control</title>\n'
     -- CSS style definition for submit buttons
     txt=txt.."<link href='http://192.168.0.2/WebUI/css/bootstrap.css' rel='stylesheet' type='text/css' />\n"
-    txt=txt..'<style>\n'
-    txt=txt..'</style></head>\n'
+    txt=txt..'<style>code {background-color: #00d3f3;} #form,#debug {float: left; margin: 20px;} </style>'
+    txt=txt..'</head>\n'
     return txt
 end
     
@@ -52,12 +60,11 @@ function form()
 end
     
 function debugout()
-    local txt="<p>"
+    local txt=""
     if(DEBUG=="ON") then
        for k, v in pairs(Log) do
         txt=txt..k..":"..v.."<br>"
         end
-        txt=txt.."</p>"
      end   
         return txt
 end
@@ -68,20 +75,6 @@ function FPRINT(txt)
     if(#Log>Loglim) then
       table.remove(Log,Loglim)
     end
-end
-
-function FENTRY(state)
-    if (state=="ON") then
-       if(EXIT=="ON") then FPRINT("#B") else FPRINT("#I") end
-    else
-       if(EXIT=="ON") then FPRINT("#O") else FPRINT("#L") end
-    end 
-end
-
-function FEXIT(state)
-end
-
-function FDEBUG(state)
 end
 
 function FSERIAL(state)
@@ -104,10 +97,17 @@ uart.on("data", "\n",
     end
     local s,f=string.find(data,"*DO")
     if(f~=nil) then
-       alert=string.sub(data,s+1,s+3) -- isolate alert code
+       alert=string.sub(data,s+1,s+2) -- isolate alert code
+    else
+        s,f=string.find(data,"*ID-")
+        if(f~=nil) then
+           alert=(string.sub(data,s+4,#data-2)) -- isolate alert code
+        end    
+    end  
+    if(f~=nil) then
        print("alert called:"..alert.."\n")
        initTimer:alarm(initTimeout,tmr.ALARM_SINGLE,function() sendAlert(alert) end) 
-    end   
+    end 
     end, 0)
 end 
 
@@ -121,6 +121,17 @@ function sendPhone(alert_type)
 -- setServer("IP","104.27.148.113") -- set address
 -- setServer("SUBDIR","") -- set dir
 -- REQ=""
-REQ="http://wirepusher.com/send?id=wAptmpnzh&title=Alert&message=Cat&type=Cat"
+REQ="http://wirepusher.com/send?id=wAptmpnzh&title=Alert&message=Cat"..alert_type.."&type=Cat"
 sendReq()
+end
+
+function url_encode(str)
+   if str then
+      str = str:gsub("\n", "\r\n")
+      str = str:gsub("([^%w %-%_%.%~])", function(c)
+         return ("%%%02X"):format(string.byte(c))
+      end)
+      str = str:gsub(" ", "+")
+   end
+   return str    
 end
